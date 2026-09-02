@@ -253,11 +253,21 @@ local function ShouldActivateTrickstab()
 	end
 
 	-- For other modes, check keybind
-	if Menu.Main.Keybind == KEY_NONE then
+	local keyCode = Menu.Main.Keybind
+	
+	if type(keyCode) == "table" then
+		if type(keyCode.GetValue) == "function" then
+			keyCode = keyCode:GetValue()
+		else
+			keyCode = keyCode[1] or keyCode.Key or keyCode.key or keyCode.Value or keyCode.value or 0
+		end
+	end
+
+	if keyCode == KEY_NONE or keyCode == 0 or keyCode == nil then
 		return true -- Fallback if no keybind set
 	end
 
-	local currentKeyState = input.IsButtonDown(Menu.Main.Keybind)
+	local currentKeyState = input.IsButtonDown(keyCode)
 	local shouldActivate = false
 
 	-- Mode 1: On Hold - only active while holding the key
@@ -2613,13 +2623,22 @@ local function doDraw()
 		if Menu.Visuals.Attack_Circle and pLocal then
 			local shouldShowCircle = false
 
+			local keyCode = Menu.Main.Keybind
+			if type(keyCode) == "table" then
+				if type(keyCode.GetValue) == "function" then
+					keyCode = keyCode:GetValue()
+				else
+					keyCode = keyCode[1] or keyCode.Key or keyCode.key or keyCode.Value or keyCode.value or 0
+				end
+			end
+
 			-- Determine if circle should be shown based on activation mode
 			if Menu.Main.ActivationMode == 0 then
 				-- Always mode: always show
 				shouldShowCircle = true
 			elseif Menu.Main.ActivationMode == 1 then
 				-- On Hold: show while holding
-				shouldShowCircle = Menu.Main.Keybind ~= KEY_NONE and input.IsButtonDown(Menu.Main.Keybind)
+				shouldShowCircle = keyCode ~= KEY_NONE and keyCode ~= 0 and input.IsButtonDown(keyCode)
 			elseif Menu.Main.ActivationMode == 2 then
 				-- On Release: show when not holding
 				shouldShowCircle = TargetPlayer ~= nil -- Only show when in range
@@ -2628,7 +2647,7 @@ local function doDraw()
 				shouldShowCircle = toggleActive
 			elseif Menu.Main.ActivationMode == 4 then
 				-- On Click: show when clicked
-				shouldShowCircle = Menu.Main.Keybind ~= KEY_NONE and input.IsButtonDown(Menu.Main.Keybind)
+				shouldShowCircle = keyCode ~= KEY_NONE and keyCode ~= 0 and input.IsButtonDown(keyCode)
 			end
 
 			if shouldShowCircle then
